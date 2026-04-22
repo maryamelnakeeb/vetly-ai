@@ -4,7 +4,7 @@ from pydantic import BaseModel, field_validator
 from model_loader import SUPPORTED_ANIMALS, predict
 from treatments import get_treatment
 from attention import get_attention
-import asyncio
+
 
 CONFIDENCE_THRESHOLD = 0.7
 LOW_CONFIDENCE_MESSAGE = "Please consult a veterinarian if the problem persists."
@@ -64,15 +64,22 @@ async def predict_disease(request: PredictRequest) -> PredictResponse:
     if top_confidence >= CONFIDENCE_THRESHOLD:
         treatment = get_treatment(request.animal, result["prediction"])
         attention = get_attention(request.animal, result["prediction"])
-    else:
-        treatment = LOW_CONFIDENCE_MESSAGE
-        attention = ""
-
-    await asyncio.sleep(2)
-    return PredictResponse(
+        
+        res=PredictResponse(
         animal=request.animal,
         prediction=result["prediction"],
         probabilities=result["probabilities"],
         treatment=treatment,
         attention=attention
     )
+    else:
+     
+        res=PredictResponse(
+            animal=request.animal,
+            prediction="",
+            probabilities={},
+            treatment=LOW_CONFIDENCE_MESSAGE,
+            attention=""
+        )
+  
+    return res
