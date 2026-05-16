@@ -7,13 +7,13 @@ import numpy as np
 
 MODELS_DIR = Path(__file__).parent
 
-# Discover supported animals by scanning for *_model.joblib files
+
 SUPPORTED_ANIMALS: set[str] = {
     Path(p).stem.replace("_model", "")
     for p in glob.glob(str(MODELS_DIR / "*_model.joblib"))
 }
 
-# In-memory cache: animal -> loaded Pipeline
+
 _cache: dict[str, Any] = {}
 
 
@@ -47,19 +47,27 @@ def load_model(animal: str) -> Any:
 
 
 def predict(animal: str, description: str) -> dict[str, Any]:
-    """Run the pipeline on a raw text description.
 
-    Returns a dict with:
-      - "prediction":    the predicted class label (str)
-      - "probabilities": mapping of class label -> probability (float)
-    """
     pipeline = load_model(animal)
+
+    tfidf = pipeline.named_steps["tfidf"]
+
+    input_vector = tfidf.transform([description])
+
+   
+    if input_vector.nnz < 2:
+        return {
+            "prediction": " ",
+            "probabilities": {}
+        }
 
     prediction: str = pipeline.predict([description])[0]
 
     probabilities: dict[str, float] = {}
+
     if hasattr(pipeline, "predict_proba"):
         proba_values: np.ndarray = pipeline.predict_proba([description])[0]
+
         probabilities = {
             str(cls): round(float(prob), 6)
             for cls, prob in zip(pipeline.classes_, proba_values)
