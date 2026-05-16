@@ -55,7 +55,7 @@ def predict(animal: str, description: str) -> dict[str, Any]:
     input_vector = tfidf.transform([description])
 
    
-    if input_vector.nnz < 2:
+    if input_vector.nnz < 1:
         return {
             "prediction": " ",
             "probabilities": {}
